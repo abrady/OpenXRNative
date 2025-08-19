@@ -4,15 +4,18 @@ use std::time::Instant;
 use vulkano::buffer::{BufferUsage, CpuAccessibleBuffer, TypedBufferAccess};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferUsage, SubpassContents};
 use vulkano::descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet};
-use vulkano::device::{Device, DeviceCreateInfo, QueueCreateInfo, QueueFlags, DeviceExtensions};
+use vulkano::device::{Device, DeviceCreateInfo, DeviceExtensions, QueueCreateInfo, QueueFlags};
 use vulkano::image::ImageUsage;
 use vulkano::instance::{Instance, InstanceCreateInfo};
-use vulkano::pipeline::{GraphicsPipeline, Pipeline, PipelineBindPoint};
 use vulkano::pipeline::graphics::input_assembly::InputAssemblyState;
-use vulkano::pipeline::graphics::viewport::ViewportState;
 use vulkano::pipeline::graphics::vertex_input::BuffersDefinition;
+use vulkano::pipeline::graphics::viewport::ViewportState;
+use vulkano::pipeline::{GraphicsPipeline, Pipeline, PipelineBindPoint};
 use vulkano::render_pass::{Framebuffer, FramebufferCreateInfo, RenderPass, Subpass};
-use vulkano::swapchain::{Swapchain, SwapchainCreateInfo, SwapchainCreationError, acquire_next_image, SwapchainPresentInfo};
+use vulkano::swapchain::{
+    acquire_next_image, Swapchain, SwapchainCreateInfo, SwapchainCreationError,
+    SwapchainPresentInfo,
+};
 use vulkano::sync::{self, GpuFuture};
 use vulkano::VulkanLibrary;
 use vulkano_win::VkSurfaceBuild;
@@ -21,8 +24,8 @@ use winit::event::{Event, WindowEvent};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::WindowBuilder;
 
-use cgmath::{Matrix4, Point3, Vector3, perspective, Deg};
 use bytemuck::{Pod, Zeroable};
+use cgmath::{perspective, Deg, Matrix4, Point3, Vector3};
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, Zeroable, Pod)]
@@ -75,10 +78,14 @@ void main() {
 fn main() {
     let library = VulkanLibrary::new().expect("no local Vulkan library/DK found");
     let required_extensions = vulkano_win::required_extensions(&library);
-    let instance = Instance::new(library, InstanceCreateInfo {
-        enabled_extensions: required_extensions,
-        ..Default::default()
-    }).expect("failed to create instance");
+    let instance = Instance::new(
+        library,
+        InstanceCreateInfo {
+            enabled_extensions: required_extensions,
+            ..Default::default()
+        },
+    )
+    .expect("failed to create instance");
 
     let event_loop = EventLoop::new().unwrap();
     let surface = WindowBuilder::new()
@@ -109,12 +116,12 @@ fn main() {
                 queue_family_index,
                 ..Default::default()
             }],
-            enabled_extensions: physical_device
-                .required_extensions()
-                .union(&vulkano::device::DeviceExtensions {
+            enabled_extensions: physical_device.required_extensions().union(
+                &vulkano::device::DeviceExtensions {
                     khr_swapchain: true,
                     ..vulkano::device::DeviceExtensions::empty()
-                }),
+                },
+            ),
             ..Default::default()
         },
     )
@@ -195,41 +202,113 @@ fn main() {
 
     let vertices = [
         // front (red)
-        Vertex { position: [-0.5, -0.5, 0.5], color: [1.0, 0.0, 0.0] },
-        Vertex { position: [0.5, -0.5, 0.5], color: [1.0, 0.0, 0.0] },
-        Vertex { position: [0.5, 0.5, 0.5], color: [1.0, 0.0, 0.0] },
-        Vertex { position: [-0.5, 0.5, 0.5], color: [1.0, 0.0, 0.0] },
+        Vertex {
+            position: [-0.5, -0.5, 0.5],
+            color: [1.0, 0.0, 0.0],
+        },
+        Vertex {
+            position: [0.5, -0.5, 0.5],
+            color: [1.0, 0.0, 0.0],
+        },
+        Vertex {
+            position: [0.5, 0.5, 0.5],
+            color: [1.0, 0.0, 0.0],
+        },
+        Vertex {
+            position: [-0.5, 0.5, 0.5],
+            color: [1.0, 0.0, 0.0],
+        },
         // back (green)
-        Vertex { position: [-0.5, -0.5, -0.5], color: [0.0, 1.0, 0.0] },
-        Vertex { position: [0.5, -0.5, -0.5], color: [0.0, 1.0, 0.0] },
-        Vertex { position: [0.5, 0.5, -0.5], color: [0.0, 1.0, 0.0] },
-        Vertex { position: [-0.5, 0.5, -0.5], color: [0.0, 1.0, 0.0] },
+        Vertex {
+            position: [-0.5, -0.5, -0.5],
+            color: [0.0, 1.0, 0.0],
+        },
+        Vertex {
+            position: [0.5, -0.5, -0.5],
+            color: [0.0, 1.0, 0.0],
+        },
+        Vertex {
+            position: [0.5, 0.5, -0.5],
+            color: [0.0, 1.0, 0.0],
+        },
+        Vertex {
+            position: [-0.5, 0.5, -0.5],
+            color: [0.0, 1.0, 0.0],
+        },
         // left (blue)
-        Vertex { position: [-0.5, -0.5, -0.5], color: [0.0, 0.0, 1.0] },
-        Vertex { position: [-0.5, -0.5, 0.5], color: [0.0, 0.0, 1.0] },
-        Vertex { position: [-0.5, 0.5, 0.5], color: [0.0, 0.0, 1.0] },
-        Vertex { position: [-0.5, 0.5, -0.5], color: [0.0, 0.0, 1.0] },
+        Vertex {
+            position: [-0.5, -0.5, -0.5],
+            color: [0.0, 0.0, 1.0],
+        },
+        Vertex {
+            position: [-0.5, -0.5, 0.5],
+            color: [0.0, 0.0, 1.0],
+        },
+        Vertex {
+            position: [-0.5, 0.5, 0.5],
+            color: [0.0, 0.0, 1.0],
+        },
+        Vertex {
+            position: [-0.5, 0.5, -0.5],
+            color: [0.0, 0.0, 1.0],
+        },
         // right (yellow)
-        Vertex { position: [0.5, -0.5, -0.5], color: [1.0, 1.0, 0.0] },
-        Vertex { position: [0.5, -0.5, 0.5], color: [1.0, 1.0, 0.0] },
-        Vertex { position: [0.5, 0.5, 0.5], color: [1.0, 1.0, 0.0] },
-        Vertex { position: [0.5, 0.5, -0.5], color: [1.0, 1.0, 0.0] },
+        Vertex {
+            position: [0.5, -0.5, -0.5],
+            color: [1.0, 1.0, 0.0],
+        },
+        Vertex {
+            position: [0.5, -0.5, 0.5],
+            color: [1.0, 1.0, 0.0],
+        },
+        Vertex {
+            position: [0.5, 0.5, 0.5],
+            color: [1.0, 1.0, 0.0],
+        },
+        Vertex {
+            position: [0.5, 0.5, -0.5],
+            color: [1.0, 1.0, 0.0],
+        },
         // top (cyan)
-        Vertex { position: [-0.5, 0.5, -0.5], color: [0.0, 1.0, 1.0] },
-        Vertex { position: [-0.5, 0.5, 0.5], color: [0.0, 1.0, 1.0] },
-        Vertex { position: [0.5, 0.5, 0.5], color: [0.0, 1.0, 1.0] },
-        Vertex { position: [0.5, 0.5, -0.5], color: [0.0, 1.0, 1.0] },
+        Vertex {
+            position: [-0.5, 0.5, -0.5],
+            color: [0.0, 1.0, 1.0],
+        },
+        Vertex {
+            position: [-0.5, 0.5, 0.5],
+            color: [0.0, 1.0, 1.0],
+        },
+        Vertex {
+            position: [0.5, 0.5, 0.5],
+            color: [0.0, 1.0, 1.0],
+        },
+        Vertex {
+            position: [0.5, 0.5, -0.5],
+            color: [0.0, 1.0, 1.0],
+        },
         // bottom (magenta)
-        Vertex { position: [-0.5, -0.5, -0.5], color: [1.0, 0.0, 1.0] },
-        Vertex { position: [-0.5, -0.5, 0.5], color: [1.0, 0.0, 1.0] },
-        Vertex { position: [0.5, -0.5, 0.5], color: [1.0, 0.0, 1.0] },
-        Vertex { position: [0.5, -0.5, -0.5], color: [1.0, 0.0, 1.0] },
+        Vertex {
+            position: [-0.5, -0.5, -0.5],
+            color: [1.0, 0.0, 1.0],
+        },
+        Vertex {
+            position: [-0.5, -0.5, 0.5],
+            color: [1.0, 0.0, 1.0],
+        },
+        Vertex {
+            position: [0.5, -0.5, 0.5],
+            color: [1.0, 0.0, 1.0],
+        },
+        Vertex {
+            position: [0.5, -0.5, -0.5],
+            color: [1.0, 0.0, 1.0],
+        },
     ];
 
     let indices: Vec<u16> = vec![
-        0, 1, 2, 2, 3, 0,       // front
-        4, 5, 6, 6, 7, 4,       // back
-        8, 9, 10, 10, 11, 8,    // left
+        0, 1, 2, 2, 3, 0, // front
+        4, 5, 6, 6, 7, 4, // back
+        8, 9, 10, 10, 11, 8, // left
         12, 13, 14, 14, 15, 12, // right
         16, 17, 18, 18, 19, 16, // top
         20, 21, 22, 22, 23, 20, // bottom
@@ -256,10 +335,16 @@ fn main() {
 
     event_loop.run(move |event, _, control_flow| {
         match event {
-            Event::WindowEvent { event: WindowEvent::CloseRequested, .. } => {
+            Event::WindowEvent {
+                event: WindowEvent::CloseRequested,
+                ..
+            } => {
                 *control_flow = ControlFlow::Exit;
             }
-            Event::WindowEvent { event: WindowEvent::Resized(_), .. } => {
+            Event::WindowEvent {
+                event: WindowEvent::Resized(_),
+                ..
+            } => {
                 recreate_swapchain = true;
             }
             Event::MainEventsCleared => {
@@ -288,7 +373,9 @@ fn main() {
                             let new_framebuffers = new_images
                                 .iter()
                                 .map(|image| {
-                                    let view = vulkano::image::view::ImageView::new_default(image.clone()).unwrap();
+                                    let view =
+                                        vulkano::image::view::ImageView::new_default(image.clone())
+                                            .unwrap();
                                     Framebuffer::new(
                                         render_pass.clone(),
                                         FramebufferCreateInfo {
@@ -311,14 +398,15 @@ fn main() {
                     recreate_swapchain = false;
                 }
 
-                let (image_index, suboptimal, acquire_future) = match acquire_next_image(swapchain.clone(), None) {
-                    Ok(r) => r,
-                    Err(vulkano::swapchain::AcquireError::OutOfDate) => {
-                        recreate_swapchain = true;
-                        return;
-                    }
-                    Err(e) => panic!("failed to acquire next image: {e}"),
-                };
+                let (image_index, suboptimal, acquire_future) =
+                    match acquire_next_image(swapchain.clone(), None) {
+                        Ok(r) => r,
+                        Err(vulkano::swapchain::AcquireError::OutOfDate) => {
+                            recreate_swapchain = true;
+                            return;
+                        }
+                        Err(e) => panic!("failed to acquire next image: {e}"),
+                    };
 
                 if suboptimal {
                     recreate_swapchain = true;
